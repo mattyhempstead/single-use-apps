@@ -1,10 +1,10 @@
-const express = require("express");
-const path = require("path");
-const esbuild = require("esbuild");
-const postcss = require("postcss");
-const tailwindcss = require("tailwindcss");
-const autoprefixer = require("autoprefixer");
-const fs = require("fs").promises;
+import autoprefixer from "autoprefixer";
+import esbuild from "esbuild";
+import express from "express";
+import fs from "fs/promises";
+import path from "path";
+import postcss from "postcss";
+import tailwindcss from "tailwindcss";
 
 const app = express();
 const port = 3000;
@@ -55,7 +55,7 @@ renderApp(App);
 `;
 
 // Add this near the top of your file
-const tailwindConfig = require("./tailwind.config.js");
+import tailwindConfig from "./tailwind.config.js";
 
 // Route for bundling index.tsx and Tailwind CSS on-the-fly when requested
 app.get("/bundle.js", async (req, res) => {

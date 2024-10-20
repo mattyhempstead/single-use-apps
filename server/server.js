@@ -16,7 +16,7 @@ app.use(express.static(path.join(__dirname, "public")));
 const reactAppCode = `
 import { format } from "https://cdn.skypack.dev/date-fns";
 import React, { useEffect, useState } from "react";
-import { Button } from "../components/ui/button";
+import { Button } from "@/components/ui/button";
 
 const App: React.FC = () => {
   const [formattedDate, setFormattedDate] = useState<string>("");

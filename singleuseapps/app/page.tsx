@@ -2,18 +2,36 @@
 
 import { trpc } from "@/app/api/trpc/trpcClient";
 import { Button } from "@/components/ui/button";
+import SelectInput from "@/components/ui/custom-inputs/SelectInput";
 import { useUserAuth } from "@/hooks/useUserAuth";
 import Editor from "@monaco-editor/react";
 import { useState } from "react";
 
 export default function Page() {
+  const { userAuth, isLoading } = useUserAuth();
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!userAuth) {
+    return <div>Please log in to access this page.</div>;
+  }
+
+  return <PageContent />;
+}
+
+function PageContent() {
   const [code, setCode] = useState("// Write your code here");
   const [projectId, setProjectId] = useState<string | null>(null);
-  const { userAuth, isLoading } = useUserAuth();
+  const { userAuth } = useUserAuth();
   const { data: currentUser, isLoading: isCurrentUserLoading } =
     trpc.user.getCurrentUser.useQuery(undefined, {
       enabled: !!userAuth,
     });
+
+  const { data: projects, isLoading: isProjectsLoading } =
+    trpc.project.listProjects.useQuery();
 
   const createProjectMutation = trpc.project.createProject.useMutation();
   const updateProjectMutation = trpc.project.updateProject.useMutation();
@@ -46,14 +64,32 @@ export default function Page() {
       </div>
       <div className="flex flex-col items-center justify-center p-8">
         <div className="flex flex-col gap-8 items-center sm:items-start">
-          test
+          {isProjectsLoading ? (
+            <p>Loading projects...</p>
+          ) : (
+            <SelectInput
+              value={projectId}
+              onChange={setProjectId}
+              items={
+                projects?.map((project) => ({
+                  value: project.projectId,
+                  label: `Project ${project.projectId} (${new Date(
+                    project.updatedAt,
+                  ).toLocaleString()})`,
+                })) || []
+              }
+              placeholder="Select a project"
+              showPlaceholderAsOption={true}
+              className="w-64"
+            />
+          )}
           <Button
             onClick={handleSaveProject}
             loading={updateProjectMutation.isPending}
           >
             Save project
           </Button>
-          {isLoading || (userAuth && isCurrentUserLoading) ? (
+          {isCurrentUserLoading ? (
             <p>Loading...</p>
           ) : (
             <>

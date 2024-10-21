@@ -61,4 +61,16 @@ export const projectRouter = t.router({
 
       return { id: updatedProject[0].id };
     }),
+  listProjects: userProcedure.query(async ({ ctx }) => {
+    const projects = await db
+      .select({
+        projectId: projectsTable.id,
+        createdAt: projectsTable.createdAt,
+        updatedAt: projectsTable.updatedAt,
+      })
+      .from(projectsTable)
+      .where(eq(projectsTable.userId, ctx.user.userId));
+
+    return projects;
+  }),
 });

@@ -15,6 +15,20 @@
       "when": 1729500387245,
       "tag": "0001_red_morbius",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1729501471829,
+      "tag": "0002_cheerful_warlock",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1729501527318,
+      "tag": "0003_sticky_slapstick",
+      "breakpoints": true
     }
   ]
 }

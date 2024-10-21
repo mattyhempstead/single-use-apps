@@ -1,0 +1,1 @@
+ALTER TABLE "projects" ALTER COLUMN "source_code" DROP NOT NULL;

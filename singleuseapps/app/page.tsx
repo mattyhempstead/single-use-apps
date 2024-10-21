@@ -1,11 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useUserAuth } from "@/hooks/useUserAuth";
 import Editor from "@monaco-editor/react";
 import { useState } from "react";
 
 export default function Page() {
   const [code, setCode] = useState("// Write your code here");
+  const { userAuth, isLoading } = useUserAuth();
 
   return (
     <div className="grid grid-cols-2 min-h-screen font-[family-name:var(--font-geist-sans)]">
@@ -21,6 +23,16 @@ export default function Page() {
         <div className="flex flex-col gap-8 items-center sm:items-start">
           test
           <Button>Click me</Button>
+          {isLoading ? (
+            <p>Loading...</p>
+          ) : (
+            <>
+              <p>User ID: {userAuth?.id}</p>
+              {userAuth?.email && !userAuth.app_metadata.provider && (
+                <p>Email: {userAuth.email}</p>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>

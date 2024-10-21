@@ -7,7 +7,7 @@ import { useUserAuth } from "@/hooks/useUserAuth";
 import Editor from "@monaco-editor/react";
 import { format } from "date-fns";
 import * as monaco from "monaco-editor";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function Page({ params }: { params: { projectId: string } }) {
   const { userAuth, isLoading } = useUserAuth();
@@ -34,21 +34,35 @@ export default function Page({ params }: { params: { projectId: string } }) {
 
 function PageContent({ project }: { project: ProjectsSelect }) {
   const [code, setCode] = useState(project.sourceCode);
-  const { userAuth } = useUserAuth();
+  const [editor, setEditor] =
+    useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 
   const updateProjectMutation = trpc.project.updateProject.useMutation();
 
-  const handleSaveProject = async () => {
+  const handleSaveProject = useCallback(async () => {
     await updateProjectMutation.mutateAsync({
       projectId: project.id,
       sourceCode: code,
     });
-  };
+  }, [updateProjectMutation, project.id, code]);
+
+  useEffect(() => {
+    if (editor) {
+      const disposable = editor.addAction({
+        id: "save-project",
+        label: "Save Project",
+        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
+        run: handleSaveProject,
+      });
+
+      return () => {
+        disposable.dispose();
+      };
+    }
+  }, [editor, handleSaveProject]);
 
   const handleEditorMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-      handleSaveProject();
-    });
+    setEditor(editor);
   };
 
   return (

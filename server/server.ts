@@ -2,6 +2,7 @@ import autoprefixer from "autoprefixer";
 import esbuild from "esbuild";
 import express from "express";
 import fs from "fs/promises";
+// import fetch from "node-fetch";
 import path from "path";
 import postcss from "postcss";
 import tailwindcss from "tailwindcss";
@@ -12,47 +13,24 @@ const port = 3001;
 // Serve static files (like index.html) from the public directory
 // app.use(express.static(path.join(__dirname, "public")));
 
-// String containing the React code you want to bundle
-const reactAppCode = `
-import { format } from "https://cdn.skypack.dev/date-fns";
-import React, { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-
-const App: React.FC = () => {
-  const [formattedDate, setFormattedDate] = useState<string>("");
-  const [formatIndex, setFormatIndex] = useState<number>(0);
-  const dateFormats: string[] = ["MMMM do, yyyy", "yyyy-MM-dd", "dd/MM/yyyy"];
-
-  useEffect(() => {
-    updateFormattedDate();
-  }, [formatIndex]);
-
-  const updateFormattedDate = () => {
-    const date = new Date();
-    const formatted = format(date, dateFormats[formatIndex]);
-    setFormattedDate(formatted);
-  };
-
-  const cycleFormat = () => {
-    setFormatIndex((prevIndex) => (prevIndex + 1) % dateFormats.length);
-  };
-
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-3xl font-bold mb-4 text-blue-600">Date-fns in React with ES Modules!</h1>
-      <div id="result" className="text-xl mb-4">Today's date is {formattedDate}</div>
-      <Button 
-        onClick={cycleFormat}
-      >
-        Change Date Format
-      </Button>
-    </div>
+async function getProject(projectId: string): Promise<string> {
+  const response = await fetch(
+    `http://localhost:3000/api/renderServer/getProject?projectId=${projectId}`,
   );
-};
+  if (!response.ok) {
+    throw new Error(`Failed to fetch project: ${response.statusText}`);
+  }
+  const data = await response.json();
+  return data.sourceCode;
+}
+
+async function getProjectReactAppCode(projectId: string): Promise<string> {
+  const sourceCode = await getProject(projectId);
+  return `${sourceCode}
 
 import { renderApp } from "./root";
-renderApp(App);
-`;
+renderApp(App);`;
+}
 
 // Add this near the top of your file
 import tailwindConfig from "./tailwind.config.js";
@@ -62,21 +40,22 @@ app.get("/app/:projectId/bundle.js", async (req, res) => {
   const projectId = req.params.projectId;
   console.log(`Requested bundle.js for project ${projectId}`);
   try {
+    const reactAppCode = await getProjectReactAppCode(projectId);
     // Use esbuild to bundle the provided code string (JSX + Tailwind CSS)
     const result = await esbuild.build({
       stdin: {
-        contents: reactAppCode, // The provided React app code as a string
-        resolveDir: path.resolve(__dirname, "src"), // Resolve relative imports from 'src'
-        sourcefile: "index.tsx", // Virtual filename for the in-memory build
-        loader: "tsx", // Loader for TypeScript JSX (TSX)
+        contents: reactAppCode,
+        resolveDir: path.resolve(__dirname, "src"),
+        sourcefile: "index.tsx",
+        loader: "tsx",
       },
-      bundle: true, // Bundle everything
-      write: false, // Don't write to the file system, return the output in-memory
-      loader: { ".ts": "ts", ".tsx": "tsx" }, // Handle TypeScript and TSX files
-      format: "esm", // Output as ES modules
-      sourcemap: true, // Optional: Generate sourcemaps for debugging
-      minify: true, // Minify the bundle
-      platform: "browser", // Target the browser platform
+      bundle: true,
+      write: false,
+      loader: { ".ts": "ts", ".tsx": "tsx" },
+      format: "esm",
+      sourcemap: true,
+      minify: true,
+      platform: "browser",
     });
 
     // Set content type to JavaScript
@@ -101,14 +80,15 @@ app.get("/app/:projectId/bundle.css", async (req, res) => {
       "utf8",
     );
 
+    const reactAppCode = await getProjectReactAppCode(projectId);
+
     // Process the globals.css using PostCSS and dynamically scan React content
     const result = await postcss([
       tailwindcss({
-        ...tailwindConfig, // Spread your Tailwind config here
+        ...tailwindConfig,
         content: [
-          ...tailwindConfig.content, // Spread the existing content from tailwind config
+          ...tailwindConfig.content,
           { raw: reactAppCode, extension: "tsx" },
-          // Add any other content sources from your tailwind.config.js here
         ],
       }),
       autoprefixer,

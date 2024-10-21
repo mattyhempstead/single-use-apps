@@ -7,10 +7,10 @@ import postcss from "postcss";
 import tailwindcss from "tailwindcss";
 
 const app = express();
-const port = 3000;
+const port = 3001;
 
 // Serve static files (like index.html) from the public directory
-app.use(express.static(path.join(__dirname, "public")));
+// app.use(express.static(path.join(__dirname, "public")));
 
 // String containing the React code you want to bundle
 const reactAppCode = `
@@ -58,7 +58,9 @@ renderApp(App);
 import tailwindConfig from "./tailwind.config.js";
 
 // Route for bundling index.tsx and Tailwind CSS on-the-fly when requested
-app.get("/bundle.js", async (req, res) => {
+app.get("/app/:projectId/bundle.js", async (req, res) => {
+  const projectId = req.params.projectId;
+  console.log(`Requested bundle.js for project ${projectId}`);
   try {
     // Use esbuild to bundle the provided code string (JSX + Tailwind CSS)
     const result = await esbuild.build({
@@ -89,7 +91,9 @@ app.get("/bundle.js", async (req, res) => {
 });
 
 // Update the "/bundle.css" route
-app.get("/bundle.css", async (req, res) => {
+app.get("/app/:projectId/bundle.css", async (req, res) => {
+  const projectId = req.params.projectId;
+  console.log(`Requested bundle.css for project ${projectId}`);
   try {
     // Read the globals.css file
     const globalsCss = await fs.readFile(
@@ -123,8 +127,10 @@ app.get("/bundle.css", async (req, res) => {
   }
 });
 
-// Serve the index.html file on the root route
-app.get("/", (req, res) => {
+// Serve the index.html file on the app route
+app.get("/app/:projectId/index.html", (req, res) => {
+  const projectId = req.params.projectId;
+  console.log(`Requested index.html for project ${projectId}`);
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 

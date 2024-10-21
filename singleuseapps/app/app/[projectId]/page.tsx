@@ -35,10 +35,6 @@ export default function Page({ params }: { params: { projectId: string } }) {
 function PageContent({ project }: { project: ProjectsSelect }) {
   const [code, setCode] = useState(project.sourceCode);
   const { userAuth } = useUserAuth();
-  const { data: currentUser, isLoading: isCurrentUserLoading } =
-    trpc.user.getCurrentUser.useQuery(undefined, {
-      enabled: !!userAuth,
-    });
 
   const updateProjectMutation = trpc.project.updateProject.useMutation();
 
@@ -83,24 +79,21 @@ function PageContent({ project }: { project: ProjectsSelect }) {
         </div>
       </div>
       <div className="flex flex-col items-center justify-center p-8">
-        <div className="flex flex-col gap-8 items-center sm:items-start">
-          {isCurrentUserLoading ? (
-            <p>Loading...</p>
-          ) : (
-            <>
-              <p>User ID: {userAuth?.id}</p>
-              {userAuth?.email && !userAuth.app_metadata.provider && (
-                <p>Email: {userAuth.email}</p>
-              )}
-              {currentUser && (
-                <p>
-                  Created At: {new Date(currentUser.createdAt).toLocaleString()}
-                </p>
-              )}
-            </>
-          )}
-        </div>
+        <AppDisplay projectId={project.id} />
       </div>
     </div>
+  );
+}
+
+function AppDisplay({ projectId }: { projectId: string }) {
+  const currentUrl = new URL(window.location.href);
+  const appUrl = `${currentUrl.protocol}//${currentUrl.hostname}:3001/app/${projectId}/index.html`;
+
+  return (
+    <iframe
+      src={appUrl}
+      className="w-full h-full border-0"
+      title="App Display"
+    />
   );
 }

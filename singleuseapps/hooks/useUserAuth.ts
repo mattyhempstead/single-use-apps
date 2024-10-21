@@ -1,5 +1,9 @@
+"use client";
+
+import { trpc } from "@/app/api/trpc/trpcClient";
 import { supabase } from "@/lib/supabase/browserClient";
 import { User } from "@supabase/auth-js";
+import { useEffect, useState } from "react";
 import { create } from "zustand";
 
 interface UserAuthState {
@@ -9,7 +13,7 @@ interface UserAuthState {
   setIsLoading: (isLoading: boolean) => void;
 }
 
-export const useUserAuth = create<UserAuthState>((set) => ({
+const useUserAuthStore = create<UserAuthState>((set) => ({
   userAuth: null,
   isLoading: true,
   setUserAuth: (userAuth) => set({ userAuth }),
@@ -17,7 +21,7 @@ export const useUserAuth = create<UserAuthState>((set) => ({
 }));
 
 const initializeAuth = async () => {
-  const store = useUserAuth.getState();
+  const store = useUserAuthStore.getState();
 
   try {
     const {
@@ -43,8 +47,11 @@ const initializeAuth = async () => {
       if (event === "SIGNED_OUT") {
         // Attempt to sign in anonymously when the user signs out
         const { data, error } = await supabase.auth.signInAnonymously();
-        if (error) console.error("Error signing in anonymously:", error);
-        else store.setUserAuth(data.user);
+        if (error) {
+          console.error("Error signing in anonymously:", error);
+        } else {
+          store.setUserAuth(data.user);
+        }
       } else {
         store.setUserAuth(session?.user ?? null);
       }
@@ -57,3 +64,30 @@ const initializeAuth = async () => {
 };
 
 initializeAuth();
+
+export const useUserAuth = () => {
+  const store = useUserAuthStore();
+  const [isUpserted, setIsUpserted] = useState(false);
+  const upsertUserMutation = trpc.user.upsertUserAccount.useMutation();
+
+  useEffect(() => {
+    if (store.userAuth && !isUpserted && !upsertUserMutation.isLoading) {
+      upsertUserMutation.mutate(undefined, {
+        onSuccess: () => {
+          setIsUpserted(true);
+        },
+        onError: (error) => {
+          console.error("Error upserting user:", error);
+        },
+      });
+    }
+  }, [store.userAuth, isUpserted, upsertUserMutation]);
+
+  return {
+    userAuth: isUpserted ? store.userAuth : null,
+    isLoading:
+      store.isLoading ||
+      upsertUserMutation.isLoading ||
+      (!isUpserted && !!store.userAuth),
+  };
+};

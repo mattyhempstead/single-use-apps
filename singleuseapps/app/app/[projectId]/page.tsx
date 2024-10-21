@@ -85,7 +85,7 @@ function PageContent({ project }: { project: ProjectsSelect }) {
         <div className="flex-grow">
           <Editor
             height="100%"
-            defaultLanguage="javascript"
+            defaultLanguage="typescript"
             defaultValue={code}
             onChange={(value: string | undefined) => setCode(value || "")}
             onMount={handleEditorMount}

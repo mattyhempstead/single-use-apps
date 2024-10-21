@@ -1,7 +1,7 @@
 import { db } from "@/db/db";
 import { ProjectsSelect, projectsTable } from "@/db/schema";
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { t, userProcedure } from "../initTRPC";
 
@@ -35,4 +35,30 @@ export const projectRouter = t.router({
       return { id: newProject[0].id };
     },
   ),
+  updateProject: userProcedure
+    .input(z.object({ projectId: z.string().uuid(), sourceCode: z.string() }))
+    .mutation(async ({ input, ctx }): Promise<{ id: string }> => {
+      const updatedProject = await db
+        .update(projectsTable)
+        .set({
+          sourceCode: input.sourceCode,
+          updatedAt: new Date().toISOString(),
+        })
+        .where(
+          and(
+            eq(projectsTable.id, input.projectId),
+            eq(projectsTable.userId, ctx.user.userId),
+          ),
+        )
+        .returning({ id: projectsTable.id });
+
+      if (updatedProject.length === 0) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Project not found or not owned by the user",
+        });
+      }
+
+      return { id: updatedProject[0].id };
+    }),
 });

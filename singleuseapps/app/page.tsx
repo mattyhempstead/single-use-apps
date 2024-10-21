@@ -8,11 +8,31 @@ import { useState } from "react";
 
 export default function Page() {
   const [code, setCode] = useState("// Write your code here");
+  const [projectId, setProjectId] = useState<string | null>(null);
   const { userAuth, isLoading } = useUserAuth();
   const { data: currentUser, isLoading: isCurrentUserLoading } =
     trpc.user.getCurrentUser.useQuery(undefined, {
       enabled: !!userAuth,
     });
+
+  const createProjectMutation = trpc.project.createProject.useMutation();
+  const updateProjectMutation = trpc.project.updateProject.useMutation();
+
+  const handleSaveProject = async () => {
+    if (!projectId) {
+      const result = await createProjectMutation.mutateAsync();
+      setProjectId(result.id);
+      await updateProjectMutation.mutateAsync({
+        projectId: result.id,
+        sourceCode: code,
+      });
+    } else {
+      await updateProjectMutation.mutateAsync({
+        projectId,
+        sourceCode: code,
+      });
+    }
+  };
 
   return (
     <div className="grid grid-cols-2 min-h-screen font-[family-name:var(--font-geist-sans)]">
@@ -27,7 +47,12 @@ export default function Page() {
       <div className="flex flex-col items-center justify-center p-8">
         <div className="flex flex-col gap-8 items-center sm:items-start">
           test
-          <Button>Click me</Button>
+          <Button
+            onClick={handleSaveProject}
+            loading={updateProjectMutation.isLoading}
+          >
+            Save project
+          </Button>
           {isLoading || (userAuth && isCurrentUserLoading) ? (
             <p>Loading...</p>
           ) : (

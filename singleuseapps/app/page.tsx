@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import Editor from "@monaco-editor/react";
 import { useState } from "react";
 
@@ -19,6 +20,7 @@ export default function Page() {
       <div className="flex flex-col items-center justify-center p-8">
         <div className="flex flex-col gap-8 items-center sm:items-start">
           test
+          <Button>Click me</Button>
         </div>
       </div>
     </div>

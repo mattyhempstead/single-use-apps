@@ -71,7 +71,7 @@ export const useUserAuth = () => {
   const upsertUserMutation = trpc.user.upsertUserAccount.useMutation();
 
   useEffect(() => {
-    if (store.userAuth && !isUpserted && !upsertUserMutation.isLoading) {
+    if (store.userAuth && !isUpserted && !upsertUserMutation.isPending) {
       upsertUserMutation.mutate(undefined, {
         onSuccess: () => {
           setIsUpserted(true);
@@ -87,7 +87,7 @@ export const useUserAuth = () => {
     userAuth: isUpserted ? store.userAuth : null,
     isLoading:
       store.isLoading ||
-      upsertUserMutation.isLoading ||
+      upsertUserMutation.isPending ||
       (!isUpserted && !!store.userAuth),
   };
 };

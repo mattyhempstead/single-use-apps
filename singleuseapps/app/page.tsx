@@ -49,7 +49,7 @@ export default function Page() {
           test
           <Button
             onClick={handleSaveProject}
-            loading={updateProjectMutation.isLoading}
+            loading={updateProjectMutation.isPending}
           >
             Save project
           </Button>

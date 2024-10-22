@@ -62,7 +62,7 @@ function PageContent({ project }: { project: ProjectsSelect }) {
             </Button>
           </div>
         </div>
-        <div className="flex-grow bg-red-50">
+        <div className="flex-grow h-[calc(100vh-1rem) overflow-y-auto">
           <CodeEditor
             code={code}
             setCode={setCode}

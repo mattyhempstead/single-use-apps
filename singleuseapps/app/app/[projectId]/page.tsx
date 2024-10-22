@@ -4,10 +4,11 @@ import { trpc } from "@/app/api/trpc/trpcClient";
 import { Button } from "@/components/ui/button";
 import { ProjectsSelect } from "@/db/schema";
 import { useUserAuth } from "@/hooks/useUserAuth";
-import Editor from "@monaco-editor/react";
+import { javascript } from "@codemirror/lang-javascript";
+import { keymap } from "@codemirror/view";
+import CodeMirror from "@uiw/react-codemirror";
 import { format } from "date-fns";
-import * as monaco from "monaco-editor";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 export default function Page({ params }: { params: { projectId: string } }) {
   const { userAuth, isLoading } = useUserAuth();
@@ -34,8 +35,6 @@ export default function Page({ params }: { params: { projectId: string } }) {
 
 function PageContent({ project }: { project: ProjectsSelect }) {
   const [code, setCode] = useState(project.sourceCode);
-  const [editor, setEditor] =
-    useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 
   const updateProjectMutation = trpc.project.updateProject.useMutation();
 
@@ -45,25 +44,6 @@ function PageContent({ project }: { project: ProjectsSelect }) {
       sourceCode: code,
     });
   }, [updateProjectMutation, project.id, code]);
-
-  useEffect(() => {
-    if (editor) {
-      const disposable = editor.addAction({
-        id: "save-project",
-        label: "Save Project",
-        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
-        run: handleSaveProject,
-      });
-
-      return () => {
-        disposable.dispose();
-      };
-    }
-  }, [editor, handleSaveProject]);
-
-  const handleEditorMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
-    setEditor(editor);
-  };
 
   return (
     <div className="grid grid-cols-2 min-h-screen font-[family-name:var(--font-geist-sans)]">
@@ -82,13 +62,11 @@ function PageContent({ project }: { project: ProjectsSelect }) {
             </Button>
           </div>
         </div>
-        <div className="flex-grow">
-          <Editor
-            height="100%"
-            defaultLanguage="typescript"
-            defaultValue={code}
-            onChange={(value: string | undefined) => setCode(value || "")}
-            onMount={handleEditorMount}
+        <div className="flex-grow bg-red-50">
+          <CodeEditor
+            code={code}
+            setCode={setCode}
+            onSave={handleSaveProject}
           />
         </div>
       </div>
@@ -96,6 +74,46 @@ function PageContent({ project }: { project: ProjectsSelect }) {
         <AppDisplay projectId={project.id} />
       </div>
     </div>
+  );
+}
+
+function CodeEditor({
+  code,
+  setCode,
+  onSave,
+}: {
+  code: string;
+  setCode: (code: string) => void;
+  onSave: () => void;
+}) {
+  const handleEditorChange = useCallback(
+    (value: string) => {
+      setCode(value);
+    },
+    [setCode],
+  );
+
+  // Create a keymap that listens for Ctrl+S (or Cmd+S) and triggers the save action
+  const saveKeymap = keymap.of([
+    {
+      key: "Mod-s",
+      run: () => {
+        onSave();
+        return true;
+      },
+    },
+  ]);
+
+  return (
+    <CodeMirror
+      value={code}
+      onChange={handleEditorChange}
+      extensions={[javascript({ jsx: true, typescript: true }), saveKeymap]}
+      height="100%"
+      style={{
+        height: "100%",
+      }}
+    />
   );
 }
 

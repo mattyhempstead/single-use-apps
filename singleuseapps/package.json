@@ -11,7 +11,7 @@
     "drizzle-migrate": "drizzle-kit migrate"
   },
   "dependencies": {
-    "@monaco-editor/react": "^4.6.0",
+    "@codemirror/lang-javascript": "^6.2.2",
     "@radix-ui/react-icons": "^1.3.0",
     "@radix-ui/react-select": "^2.1.2",
     "@radix-ui/react-slot": "^1.1.0",
@@ -20,6 +20,7 @@
     "@trpc/client": "^11.0.0-rc.593",
     "@trpc/react-query": "^11.0.0-rc.593",
     "@trpc/server": "^11.0.0-rc.593",
+    "@uiw/react-codemirror": "^4.23.5",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
